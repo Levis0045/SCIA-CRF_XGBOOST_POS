@@ -1,0 +1,14 @@
+data_source
+experimentations/preprocessing
+experimentations/keras_*
+experimentations/old
+experimentations/*/__py*
+experimentations/__py*/*.pyc
+training/models
+training/tmp
+experimentations/tmp
+experimentations/__pycache__
+experimentations/models
+experimentations/keras_*
+mlruns
+.ipynb_checkpoints
