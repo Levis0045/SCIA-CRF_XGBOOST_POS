@@ -8,6 +8,10 @@ Contextualize CRF/XGBOOST and Linguistic based feature for POS detection in Ghom
 
 - Position to position augmentation algorithm
 
+# Workshop presentation
+
+[Check my presentation here:  elvis_workshop_session_presentation.pdf](./elvis_workshop_session_presentation.pdf)
+
 
 # Get Masakhane POS dataset for project
 
@@ -161,3 +165,4 @@ options:
     http://127.0.0.1:5000
 
 ```
+
