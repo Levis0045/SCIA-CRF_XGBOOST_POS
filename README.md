@@ -28,6 +28,8 @@ git clone https://github.com/masakhane-io/masakhane-pos.git
 
 ```
 
+- if you want to experiment with main dataset produce by NTeALan teams, use this folder instead: `lacuna_ntealan_data` (you will need to split the dataset)
+
 # Install Python dependencies
 
 - Reproduice poetry environnement
@@ -43,7 +45,7 @@ pip install -r requirements.txt
 ```
 
 
-# Run experimentations
+# Run all my mlflow experimentations
 
 - Reproduice all my mlflow experimentations 
 
@@ -53,7 +55,9 @@ pip install -r requirements.txt
 
 ```
 
-- Run individually CRF experimentations
+# Run CRF mlflow experimentations
+
+- CRF usage
 
 ```
 python3 experimentations/mlflow_crf.py --help
@@ -79,13 +83,19 @@ options:
 
 ```
 
+- CRF run sample
+
 ```sh
 
     python3 experimentations/mlflow_crf.py --lang bbj --description "crf: iter 100" --iter 100
 
 ```
 
-- Run individually XGBOOST experimentations
+# Run XGBOOST mlflow experimentations
+
+
+- XGBOOST usage
+
 
 ```sh
 
@@ -125,10 +135,29 @@ options:
 
 ```
 
-- Run individually XGBOOST experimentations
+- XGBOOST run sample
 
 ```sh
 
     python3 experimentations/mlflow_xgboost.py --lang bbj --description "xgb: n_estimator 5060 + lr=0.01" --n-estimators 5060 --learning-rate 0.01
+
+```
+
+
+# Analyse mlflow experimentations (web ui)
+
+- launch mlflow server
+
+```sh
+
+    mlflow ui
+
+```
+
+- open this link to your webserver
+
+```sh
+
+    http://127.0.0.1:5000
 
 ```
