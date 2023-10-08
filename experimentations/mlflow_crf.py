@@ -16,7 +16,8 @@ import json
 from sangkak_estimators import SangkakPosProjetReader, SangkakPosFeaturisation
 from utils import fetch_logged_data
 
-mlflow.set_tracking_uri("file:///media/elvis/Seagate Expansion Drive/Sangkak-challenge/mlruns")
+# define your own path here / default to the current folder
+# mlflow.set_tracking_uri("file:///media/elvis/Seagate Expansion Drive/Sangkak-challenge/mlruns")
 
 # Evaluate metrics
 def eval_metrics(actual, pred, **kargs):
@@ -90,7 +91,7 @@ def main():
     mlflow.sklearn.autolog()
 
     # Get path of test data 
-    pos_path   = Path(f'./data_source/masakhane-pos/data/{args.lang}')
+    pos_path   = Path('.').parent.parent / f'data_source/masakhane-pos/data/{args.lang}'
     train_data_path = pos_path / 'train.txt'
     dev_data_path = pos_path / 'dev.txt'
     test_data_path = pos_path / 'test.txt'
@@ -240,24 +241,27 @@ def main():
                                  registered_model_name="sklearn-crf-classifier-model")
 
         print('Train set classification report:')
-        sorted_labels = sorted(labels, key=lambda name: (name[1:], name[0]))
-        report = metrics.flat_classification_report(ytest, ypred, labels=sorted_labels, 
-                                       digits=3, zero_division=False, 
-                                       output_dict=True)
-
         # log metrics
         mlflow.log_metric("f1_score", f1)
         mlflow.log_metric("accuracy", acc)
+        try:
+            from sklearn_crfsuite.utils import flatten
+            from sklearn.metrics import classification_report
+            sorted_labels = sorted(labels, key=lambda name: (name[1:], name[0]))
+            report = classification_report(flatten(ytest), flatten(ypred), 
+                                           labels=sorted_labels, 
+                                            digits=3, zero_division=False, 
+                                            output_dict=True)
 
-        for l, m in report.items():
-            if type(m) == float:
-                mlflow.log_metric(f"{l}", m)
-            else:
-                mlflow.log_metric(f"{l}_precision", m['precision'])
-                mlflow.log_metric(f"{l}_recall", m['recall'])
-                mlflow.log_metric(f"{l}_f1-score", m['f1-score'])
-                mlflow.log_metric(f"{l}_support", m['support'])
-
+            for l, m in report.items():
+                if type(m) == float:
+                    mlflow.log_metric(f"{l}", m)
+                else:
+                    mlflow.log_metric(f"{l}_precision", m['precision'])
+                    mlflow.log_metric(f"{l}_recall", m['recall'])
+                    mlflow.log_metric(f"{l}_f1-score", m['f1-score'])
+                    mlflow.log_metric(f"{l}_support", m['support'])
+        except Exception as e: print(str(e))
 
         """
         model_uri = mlflow.get_artifact_uri("crf_model")
