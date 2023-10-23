@@ -16,7 +16,7 @@ import json
 from sangkak_estimators import SangkakPosProjetReader, SangkakPosFeaturisation
 from utils import fetch_logged_data
 
-mlflow.set_tracking_uri("file:///media/elvis/Seagate Expansion Drive/Sangkak-challenge/mlruns")
+mlflow.set_tracking_uri("mlruns")
 
 # Evaluate metrics
 def eval_metrics(actual, pred, **kargs):

@@ -16,7 +16,7 @@ import random
 from sangkak_estimators import SangkakPosProjetReader, SangkakPosFeaturisation
 from utils import fetch_logged_data
 
-mlflow.set_tracking_uri("file:///media/elvis/Seagate Expansion Drive/Sangkak-challenge/mlruns")
+mlflow.set_tracking_uri("mlruns")
 
 
 def string_int_transform(r):
@@ -141,8 +141,8 @@ def main():
     # read data from source with sklearn estimator
     reader_estimator = SangkakPosProjetReader()
     list_train_data, _ = reader_estimator.fit(train_data_path).transform_analysis(augment=args.augment, limit=10)
-    list_dev_data, _ = reader_estimator.fit(dev_data_path).transform_analysis(augment=args.augment, limit=10)
-    list_test_data, _ = reader_estimator.fit(test_data_path).transform_analysis(augment=args.augment, limit=10)
+    list_dev_data, _ = reader_estimator.fit(dev_data_path).transform_analysis(augment=False, limit=10)
+    list_test_data, _ = reader_estimator.fit(test_data_path).transform_analysis(augment=False, limit=10)
 
 
     feature_estimator = SangkakPosFeaturisation()
