@@ -10,6 +10,7 @@ import mlflow
 import mlflow.xgboost
 
 import pandas as pd
+import numpy as np
 from pathlib import Path
 import random
 
@@ -240,77 +241,91 @@ def main():
         }, project)
 
 
-    all_data = pd.concat([xgb_df_train, xgb_df_dev, xgb_df_test], 
-                        axis=0, ignore_index=True)
+    def encode_data(all_data):
+        all_data_parse = all_data.copy()
 
-    i, all_labels_ = 0, {}
-    for x in all_data['labels']:
-        if x not in all_labels:
-            all_labels[x] = i
-            all_labels_[i] = x
-            i += 1
+        i, all_labels_ = 0, {}
+        for x in all_data['labels']:
+            if x not in all_labels:
+                all_labels[x] = i
+                all_labels_[i] = x
+                i += 1
+        all_data_parse['labels'] = all_data['labels'].map(all_labels).astype("int")
+        all_data_parse['word'] = all_data['word'].apply(apply_ref_transform).astype("int")
+        all_data_parse['word.tones'] = all_data['word.tones'].apply(apply_ref_transform).astype("int")
+        all_data_parse['word.normalized'] = all_data['word.normalized'].apply(apply_ref_transform).astype("int")
+        all_data_parse['word.lower()'] = all_data['word.lower()'].apply(apply_ref_transform).astype("int")
+        all_data_parse['word.prefix'] = all_data['word.prefix'].apply(apply_ref_transform).astype("int")
+        all_data_parse['word.root'] = all_data['word.root'].apply(apply_ref_transform).astype("int")
+        all_data_parse['-1:word'] = all_data['-1:word'].apply(apply_ref_transform).astype("int")
+        #all_data_parse['-1:word.tag'] = all_data['-1:word.tag'].apply(apply_ref_transform).astype("int")
+        all_data_parse['-1:word.normalized'] = all_data['-1:word.normalized'].apply(apply_ref_transform).astype("int")
+        all_data_parse['-1:word.lower()'] = all_data['-1:word.lower()'].apply(apply_ref_transform).astype("int")
+        all_data_parse['+1:word'] = all_data['+1:word'].apply(apply_ref_transform).astype("int")
+        all_data_parse['+1:word.lower()'] = all_data['+1:word.lower()'].apply(apply_ref_transform).astype("int")
+        #all_data_parse['+1:word.tag'] = all_data['+1:word.tag'].apply(apply_ref_transform).astype("int")
+        all_data_parse['+1:word.normalized'] = all_data['+1:word.normalized'].apply(apply_ref_transform).astype("int")
+        all_data_parse['+1:word.prefix'] = all_data['+1:word.prefix'].apply(apply_ref_transform).astype("int")
+        all_data_parse['+1:word.root'] = all_data['+1:word.root'].apply(apply_ref_transform).astype("int")
+        all_data_parse['-1:word.prefix'] = all_data['-1:word.prefix'].apply(apply_ref_transform).astype("int")
+        all_data_parse['-1:word.root'] = all_data['-1:word.root'].apply(apply_ref_transform).astype("int")
+        all_data_parse['+1:word.letters'] = all_data['+1:word.letters'].apply(apply_ref_transform).astype("int")
+        all_data_parse['-1:word.letters'] = all_data['-1:word.letters'].apply(apply_ref_transform).astype("int")
+        all_data_parse['word.letters'] = all_data['word.letters'].apply(apply_ref_transform).astype("int")
 
-    all_data_parse = all_data.copy()
+        # remove unused / non performants variables
+        remove_unused_features = ['+1:word.isdigit()', '+1:word.ispunctuation', '-1:word.EOS',
+                '+1:word.BOS', 'word.has_hyphen', '+1:word.EOS', '-1:word.BOS',
+                '+1:word.EOS', '-1:word.isdigit()', '+1:word.BOS', 
+                '-1:word.ispunctuation', '-1:word.BOS', '+1:word.normalized',
+                '-1:word.EOS', '-1:word.tag', '+1:word.tag', 
+                '-1:word.start_with_capital','+1:word.start_with_capital']
+        for x in remove_unused_features:
+            try: del all_data_parse[x]
+            except: print("-- fail to removed: %s" %x)
+        
+        return all_data_parse, all_labels_
 
-    all_data_parse['labels'] = all_data['labels'].map(all_labels).astype("int")
-    all_data_parse['word'] = all_data['word'].apply(apply_ref_transform).astype("int")
-    all_data_parse['word.tones'] = all_data['word.tones'].apply(apply_ref_transform).astype("int")
-    all_data_parse['word.normalized'] = all_data['word.normalized'].apply(apply_ref_transform).astype("int")
-    all_data_parse['word.lower()'] = all_data['word.lower()'].apply(apply_ref_transform).astype("int")
-    all_data_parse['word.prefix'] = all_data['word.prefix'].apply(apply_ref_transform).astype("int")
-    all_data_parse['word.root'] = all_data['word.root'].apply(apply_ref_transform).astype("int")
-    all_data_parse['-1:word'] = all_data['-1:word'].apply(apply_ref_transform).astype("int")
-    #all_data_parse['-1:word.tag'] = all_data['-1:word.tag'].apply(apply_ref_transform).astype("int")
-    all_data_parse['-1:word.normalized'] = all_data['-1:word.normalized'].apply(apply_ref_transform).astype("int")
-    all_data_parse['-1:word.lower()'] = all_data['-1:word.lower()'].apply(apply_ref_transform).astype("int")
-    all_data_parse['+1:word'] = all_data['+1:word'].apply(apply_ref_transform).astype("int")
-    all_data_parse['+1:word.lower()'] = all_data['+1:word.lower()'].apply(apply_ref_transform).astype("int")
-    #all_data_parse['+1:word.tag'] = all_data['+1:word.tag'].apply(apply_ref_transform).astype("int")
-    all_data_parse['+1:word.normalized'] = all_data['+1:word.normalized'].apply(apply_ref_transform).astype("int")
-    all_data_parse['+1:word.prefix'] = all_data['+1:word.prefix'].apply(apply_ref_transform).astype("int")
-    all_data_parse['+1:word.root'] = all_data['+1:word.root'].apply(apply_ref_transform).astype("int")
-    all_data_parse['-1:word.prefix'] = all_data['-1:word.prefix'].apply(apply_ref_transform).astype("int")
-    all_data_parse['-1:word.root'] = all_data['-1:word.root'].apply(apply_ref_transform).astype("int")
-    all_data_parse['+1:word.letters'] = all_data['+1:word.letters'].apply(apply_ref_transform).astype("int")
-    all_data_parse['-1:word.letters'] = all_data['-1:word.letters'].apply(apply_ref_transform).astype("int")
-    all_data_parse['word.letters'] = all_data['word.letters'].apply(apply_ref_transform).astype("int")
+    xgb_X_train, all_labels_train = encode_data(xgb_df_train)
+    xgb_X_dev, all_labels_dev = encode_data(xgb_df_dev)
+    xgb_X_test, all_labels_test = encode_data(xgb_df_test)
 
-    # remove unused / non performants variables
-    remove_unused_features = ['+1:word.isdigit()', '+1:word.ispunctuation', '-1:word.EOS',
-            '+1:word.BOS', 'word.has_hyphen', '+1:word.EOS', '-1:word.BOS',
-            '+1:word.EOS', '-1:word.isdigit()', '+1:word.BOS', 
-            '-1:word.ispunctuation', '-1:word.BOS', '+1:word.normalized',
-            '-1:word.EOS', '-1:word.tag', '+1:word.tag', 
-            '-1:word.start_with_capital','+1:word.start_with_capital']
-    for x in remove_unused_features:
-        try: del all_data_parse[x]
-        except: print("-- fail to removed: %s" %x)
 
-    datasets = mlflow.data.from_pandas(all_data_parse, source=str(pos_path), 
-                                        targets="labels", name="Masakhane POS Datasets")
-    mlflow.log_input(datasets, context="xgboost.training")
+    datasets_train = mlflow.data.from_pandas(xgb_X_train, source=str(pos_path), targets="labels", name="Masakhane POS Datasets Train")
+    datasets_dev = mlflow.data.from_pandas(xgb_X_dev, source=str(pos_path), targets="labels", name="Masakhane POS Datasets dev")
+    datasets_test = mlflow.data.from_pandas(xgb_X_test, source=str(pos_path), targets="labels", name="Masakhane POS Datasets test")
+    
+    xgb_X_train, xgb_y_train = xgb_X_train.drop(columns='labels'), xgb_X_train.labels
+    xgb_X_dev, xgb_y_dev = xgb_X_dev.drop(columns='labels'), xgb_X_dev.labels
+    xgb_X_test, xgb_y_test = xgb_X_test.drop(columns='labels'), xgb_X_test.labels
+
+    mlflow.log_input(datasets_train, context="xgboost.training")
+    mlflow.log_input(datasets_dev, context="xgboost.dev")
+    mlflow.log_input(datasets_test, context="xgboost.test")
 
     from sklearn.model_selection import train_test_split
     from sklearn.utils.multiclass import type_of_target
 
-    xgb_X_train, xgb_X_test, xgb_y_train, xgb_y_test = train_test_split(
-        all_data_parse.drop('labels', axis=1).copy(),
-        all_data_parse['labels'].copy(),
-        test_size=0.2, random_state=None, shuffle=args.shuffle
-    )
+    # xgb_X_train, xgb_X_test, xgb_y_train, xgb_y_test = train_test_split(
+    #     all_data_parse.drop('labels', axis=1).copy(),
+    #     all_data_parse['labels'].copy(),
+    #     test_size=0.2, random_state=None, shuffle=args.shuffle
+    # )
 
-    xgb_X_train, xgb_X_dev, xgb_y_train, xgb_y_dev = train_test_split(
-        xgb_X_train, xgb_y_train, test_size=0.25, 
-        random_state=None, shuffle=args.shuffle
-    )
+    # xgb_X_train, xgb_X_dev, xgb_y_train, xgb_y_dev = train_test_split(
+    #     xgb_X_train, xgb_y_train, test_size=0.25, 
+    #     random_state=None, shuffle=args.shuffle
+    # )
 
-    num_class = len(list(set(all_data_parse['labels'])))
+    all_labels_ = {**all_labels_test, **all_labels_dev, **all_labels_train}
+
+    num_class = len(all_labels_)
     print("Number of classes: %s" %num_class)
 
     print("Type of target of ytrain data set: %s" %type_of_target(xgb_y_train))
     print("Type of target of ytest data set: %s\n" %type_of_target(xgb_y_test))
 
-    len_data = len(all_data_parse.index)
+    len_data = len(xgb_X_train.index)
 
     def f_len(data):
         l = len(data)
@@ -374,7 +389,7 @@ def main():
         warnings.filterwarnings("ignore")
         
         mlflow.log_params(params)
-        mlflow.log_param("labels", list(all_labels_.values()))
+        mlflow.log_param("labels", all_labels_)
         mlflow.log_param("language", args.lang)
         mlflow.log_param("data shuffle", args.shuffle)
         mlflow.log_param("data augmented", args.augment)
