@@ -133,10 +133,10 @@ def main():
     mlflow.xgboost.autolog()
 
     # Get path of test data 
-    bbj_pos_path   = Path(f'./data_source/masakhane-pos/data/{args.lang}')
-    train_data_path = bbj_pos_path / 'train.txt'
-    dev_data_path = bbj_pos_path / 'dev.txt'
-    test_data_path = bbj_pos_path / 'test.txt'
+    pos_path   = Path('.').parent.parent / f'data_source/masakhane-pos/data/{args.lang}'
+    train_data_path = pos_path / 'train.txt'
+    dev_data_path = pos_path / 'dev.txt'
+    test_data_path = pos_path / 'test.txt'
 
     # read data from source with sklearn estimator
     reader_estimator = SangkakPosProjetReader()
@@ -207,8 +207,11 @@ def main():
         ]
     }
 
-    source_path = "./experimentations/preprocessing"
-    project = f'{source_path}/sangkak_input_aug_{args.augment}_xgb_df_data_{args.lang}.joblib'
+    # create preprocessing folder if not exists already
+    source_path = Path('.').parent / "preprocessing"
+    if not source_path.exists(): source_path.mkdir()
+
+    project = source_path / f'sangkak_input_aug_{args.augment}_xgb_df_data_{args.lang}.joblib'
     if Path(project).exists():
         with open(project, 'rb') as f:
             data = joblib.load(f)
@@ -283,7 +286,7 @@ def main():
         try: del all_data_parse[x]
         except: print("-- fail to removed: %s" %x)
 
-    datasets = mlflow.data.from_pandas(all_data_parse, source=str(bbj_pos_path), 
+    datasets = mlflow.data.from_pandas(all_data_parse, source=str(pos_path), 
                                         targets="labels", name="Masakhane POS Datasets")
     mlflow.log_input(datasets, context="xgboost.training")
 
@@ -322,7 +325,7 @@ def main():
     print("len of ydev data set: {l} ({p}%)".format(**f_len(xgb_y_dev)))
 
    
-    from sklearn.metrics import accuracy_score, f1_score, log_loss
+    from sklearn.metrics import accuracy_score, f1_score
     from sklearn.utils.class_weight import compute_sample_weight
     #from mlflow.models import infer_signature
 
